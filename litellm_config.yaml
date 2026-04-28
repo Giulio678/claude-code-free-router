@@ -1,0 +1,73 @@
+# LiteLLM Proxy Configuration
+# Copia questo file in ~/.claude/litellm_config.yaml
+
+model_list:
+  # === NVIDIA NIM Models (gratuiti per certi modelli) ===
+
+  - model_name: qwen3-122b
+    litellm_params:
+      model: openai/qwen/qwen3-122b
+      api_base: https://integrate.api.nvidia.com/v1
+      api_key: env/NVIDIA_API_KEY
+      max_tokens: 200000
+
+  - model_name: qwen-coder-480b
+    litellm_params:
+      model: openai/qwen/qwen-coder-480b
+      api_base: https://integrate.api.nvidia.com/v1
+      api_key: env/NVIDIA_API_KEY
+      max_tokens: 256000
+
+  - model_name: nemotron-120b
+    litellm_params:
+      model: openai/nvidia/nemotron-super-120b
+      api_base: https://integrate.api.nvidia.com/v1
+      api_key: env/NVIDIA_API_KEY
+      max_tokens: 262000
+
+  - model_name: nvidia-coder
+    litellm_params:
+      model: openai/qwen/qwen-2.5-coder-32b
+      api_base: https://integrate.api.nvidia.com/v1
+      api_key: env/NVIDIA_API_KEY
+      max_tokens: 100000
+
+  # === OpenRouter Models ===
+
+  - model_name: deepseek-v4-pro
+    litellm_params:
+      model: openrouter/deepseek/deepseek-chat-v4-pro
+      api_base: https://openrouter.ai/api/v1
+      api_key: env/OPENROUTER_API_KEY
+      max_tokens: 200000
+
+  - model_name: deepseek-flash
+    litellm_params:
+      model: openrouter/deepseek/deepseek-chat
+      api_base: https://openrouter.ai/api/v1
+      api_key: env/OPENROUTER_API_KEY
+      max_tokens: 200000
+
+  - model_name: hermes-405b
+    litellm_params:
+      model: openrouter/mythomax-lmsys-hermes-405b
+      api_base: https://openrouter.ai/api/v1
+      api_key: env/OPENROUTER_API_KEY
+      max_tokens: 100000
+
+  - model_name: gemma-12b
+    litellm_params:
+      model: openrouter/gemma-2-12b-it
+      api_base: https://openrouter.ai/api/v1
+      api_key: env/OPENROUTER_API_KEY
+      max_tokens: 8000
+
+  - model_name: gemma-4b
+    litellm_params:
+      model: openrouter/gemma-2-4b-it
+      api_base: https://openrouter.ai/api/v1
+      api_key: env/OPENROUTER_API_KEY
+      max_tokens: 8000
+
+general_settings:
+  drop_params: true

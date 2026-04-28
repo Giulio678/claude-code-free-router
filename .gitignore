@@ -1,0 +1,32 @@
+# Variabili d'ambiente con API key reali
+.env
+.env.local
+.env.*.local
+
+# Log files
+*.log
+/tmp/litellm-proxy.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+.env/
+
+# Node (se usi qualche tool JS)
+node_modules/
