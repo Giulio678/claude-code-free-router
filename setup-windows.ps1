@@ -1,150 +1,167 @@
-# Setup script per Windows (PowerShell)
-# Esegui: powershell -ExecutionPolicy Bypass -File setup-windows.ps1
+# Claude Code Free Router setup for Windows PowerShell.
+# Run: powershell -ExecutionPolicy Bypass -File setup-windows.ps1
 
-Write-Host "==========================================" -ForegroundColor Cyan
-Write-Host "Setup Claude Code con LiteLLM Proxy" -ForegroundColor Cyan
-Write-Host "==========================================" -ForegroundColor Cyan
-Write-Host ""
+$ErrorActionPreference = "Stop"
 
-# 1. Installa LiteLLM
-Write-Host "[1/5] Installazione di LiteLLM..." -ForegroundColor Yellow
-pip install litellm
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Errore: pip install fallito. Assicurati di avere Python e pip installati." -ForegroundColor Red
-    exit 1
-}
-Write-Host "OK: LiteLLM installato." -ForegroundColor Green
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "Claude Code Free Router setup" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# 2. Crea directory di configurazione
-Write-Host "[2/5] Creazione directory di configurazione..." -ForegroundColor Yellow
-$claudeDir = "$env:USERPROFILE\.claude"
-if (!(Test-Path $claudeDir)) {
-    New-Item -ItemType Directory -Path $claudeDir -Force | Out-Null
-}
-Write-Host "OK: Directory $claudeDir pronta." -ForegroundColor Green
-Write-Host ""
+$RootDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ClaudeDir = Join-Path $env:USERPROFILE ".claude"
+$CommandsDir = Join-Path $ClaudeDir "commands"
+$ProfilePath = $PROFILE
+$BeginMarker = "# >>> claude-code-free-router >>>"
+$EndMarker = "# <<< claude-code-free-router <<<"
 
-# 3. Copia il file di configurazione
-Write-Host "[3/5] Copia del file litellm_config.yaml..." -ForegroundColor Yellow
-Copy-Item -Path "litellm_config.yaml" -Destination "$claudeDir\litellm_config.yaml" -Force
-Write-Host "OK: Config copiata in $claudeDir\litellm_config.yaml" -ForegroundColor Green
-Write-Host ""
-
-# 4. Istruzioni per le API key
-Write-Host "[4/5] Configurazione delle API key..." -ForegroundColor Yellow
-Write-Host ""
-Write-Host "Apri il file .env.template e inserisci le tue API key:" -ForegroundColor White
-Write-Host "  - OpenRouter: https://openrouter.ai/keys" -ForegroundColor White
-Write-Host "  - NVIDIA: https://build.nvidia.com/" -ForegroundColor White
-Write-Host ""
-Write-Host "Poi aggiungi queste variabili d'ambiente (Metodo consigliato):" -ForegroundColor White
-Write-Host ""
-Write-Host "  1. Premi Win + X e seleziona 'System'" -ForegroundColor White
-Write-Host "  2. Clicca su 'Advanced system settings'" -ForegroundColor White
-Write-Host "  3. Clicca su 'Environment Variables'" -ForegroundColor White
-Write-Host "  4. Aggiungi nuove variabili:" -ForegroundColor White
-Write-Host ""
-Write-Host "     OPENROUTER_API_KEY = la_tua_openrouter_key" -ForegroundColor Cyan
-Write-Host "     NVIDIA_API_KEY = la_tua_nvidia_key" -ForegroundColor Cyan
-Write-Host ""
-Write-Host "Oppure aggiungi al tuo profilo PowerShell:" -ForegroundColor White
-Write-Host ""
-Write-Host "  Add-Content -Path `$env:USERPROFILE\.powershell_profile -Value `"`n# LiteLLM Proxy`n`$env:OPENROUTER_API_KEY='la_tua_key'`n`$env:NVIDIA_API_KEY='la_tua_key'`"" -ForegroundColor Cyan
-Write-Host ""
-
-# 5. Aggiungi la function claude-or al profilo PowerShell
-Write-Host "[5/5] Aggiunta della function claude-or al profilo PowerShell..." -ForegroundColor Yellow
-
-$powerShellProfile = "$env:USERPROFILE\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
-if (!(Test-Path $powerShellProfile)) {
-    New-Item -ItemType File -Path $powerShellProfile -Force | Out-Null
+function Install-LiteLLM {
+    $cmd = Get-Command litellm -ErrorAction SilentlyContinue
+    if ($cmd) {
+        Write-Host "OK: LiteLLM already installed: $($cmd.Source)" -ForegroundColor Green
+        return
+    }
+    Write-Host "Installing LiteLLM..." -ForegroundColor Yellow
+    python -m pip install --user litellm
 }
 
-$functionCode = @"
-
-# --- LLM API keys (per LiteLLM proxy) ---
-# Assicurati di aver impostato queste variabili prima di usare claude-or
-# `$env:OPENROUTER_API_KEY = "la_tua_key"
-# `$env:NVIDIA_API_KEY = "la_tua_key"
-
-# --- Claude Code con modelli free (OpenRouter + NVIDIA NIM) ---
-function claude-or {
-    $proxyUrl = "http://127.0.0.1:4000/health"
-
-    try {
-        $response = Invoke-WebRequest -Uri $proxyUrl -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop
-    } catch {
-        Write-Host "Avvio proxy LiteLLM..." -ForegroundColor Yellow
-
-        # Ferma eventuali proxy esistenti
-        Get-Process | Where-Object { $_.ProcessName -like "*litellm*" } | Stop-Process -Force -ErrorAction SilentlyContinue
-
-        # Avvia il proxy
-        Start-Process -FilePath "litellm" -ArgumentList "--config", "$env:USERPROFILE\.claude\litellm_config.yaml", "--port", "4000" -NoNewWindow -RedirectStandardOutput "C:\tmp\litellm-proxy.log"
-
-        # Attendi che il proxy sia pronto
-        $timeout = 30
-        $elapsed = 0
-        while ($elapsed -lt $timeout) {
-            Start-Sleep -Seconds 1
-            $elapsed++
-            try {
-                $response = Invoke-WebRequest -Uri $proxyUrl -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop
-                break
-            } catch {
-                continue
-            }
-        }
-
-        if ($elapsed -ge $timeout) {
-            Write-Host "Errore: proxy non risponde dopo ${timeout}s - vedi C:\tmp\litellm-proxy.log" -ForegroundColor Red
-            return
-        }
-
-        Write-Host "Proxy pronto." -ForegroundColor Green
+function Install-ProfileBlock {
+    New-Item -ItemType Directory -Path (Split-Path -Parent $ProfilePath) -Force | Out-Null
+    if (!(Test-Path $ProfilePath)) {
+        New-Item -ItemType File -Path $ProfilePath -Force | Out-Null
     }
 
-    Write-Host ""
-    Write-Host "Modelli disponibili (usa /model <nome>):" -ForegroundColor Cyan
-    Write-Host "  [NVIDIA NIM - default]" -ForegroundColor White
-    Write-Host "    qwen3-122b      → Qwen 3.5 122B (generale)" -ForegroundColor Gray
-    Write-Host "    qwen-coder-480b → Qwen 3 Coder 480B (heavy coding, 256K ctx)" -ForegroundColor Gray
-    Write-Host "    nemotron-120b   → Nemotron Super 120B (agents, 262K ctx)" -ForegroundColor Gray
-    Write-Host "    nvidia-coder    → Qwen 2.5 Coder 32B (leggero)" -ForegroundColor Gray
-    Write-Host "  [OpenRouter]" -ForegroundColor White
-    Write-Host "    deepseek-v4-pro → DeepSeek V4 Pro (1.6T params)" -ForegroundColor Gray
-    Write-Host "    deepseek-flash  → DeepSeek V4 Flash (veloce)" -ForegroundColor Gray
-    Write-Host "    hermes-405b     → Hermes 405B" -ForegroundColor Gray
-    Write-Host "    gemma-12b       → Gemma 2 12B" -ForegroundColor Gray
-    Write-Host "    gemma-4b        → Gemma 2 4B" -ForegroundColor Gray
-    Write-Host ""
+    $existing = Get-Content $ProfilePath -Raw
+    $pattern = "(?s)\n?$([regex]::Escape($BeginMarker)).*?$([regex]::Escape($EndMarker))\n?"
+    $clean = [regex]::Replace($existing, $pattern, "")
+    Set-Content -Path $ProfilePath -Value $clean
 
-    $env:ANTHROPIC_BASE_URL = "http://127.0.0.1:4000"
-    claude --model qwen3-122b $args
+    $block = @'
+
+# >>> claude-code-free-router >>>
+# Claude Code Free Router
+if (Test-Path "$env:USERPROFILE\.claude\.env") {
+    Get-Content "$env:USERPROFILE\.claude\.env" | ForEach-Object {
+        if ($_ -match '^\s*([^#][^=]+)=(.*)$') {
+            [Environment]::SetEnvironmentVariable($matches[1].Trim(), $matches[2].Trim().Trim('"'), "Process")
+        }
+    }
 }
-"@
 
-Add-Content -Path $powerShellProfile -Value $functionCode
+function claude-or {
+    param([string]$Model = "ring")
 
-Write-Host "OK: Function claude-or aggiunta al profilo PowerShell." -ForegroundColor Green
-Write-Host ""
+    if (-not $env:OPENROUTER_API_KEY) {
+        Write-Host "Error: OPENROUTER_API_KEY is missing. Put it in $env:USERPROFILE\.claude\.env" -ForegroundColor Red
+        return
+    }
 
-# Conclusione
-Write-Host "==========================================" -ForegroundColor Cyan
-Write-Host "Setup completato!" -ForegroundColor Cyan
-Write-Host "==========================================" -ForegroundColor Cyan
+    $provider = "openrouter"
+    switch ($Model) {
+        {$_ -in @("models","model","list","--models","-m")} {
+            Write-Host "OpenRouter free:"
+            Write-Host "  claude-or qwen-coder        # qwen/qwen3-coder:free"
+            Write-Host "  claude-or qwen-next         # qwen/qwen3-next-80b-a3b-instruct:free"
+            Write-Host "  claude-or ring              # inclusionai/ring-2.6-1t:free (default)"
+            Write-Host "  claude-or nemotron-free     # nvidia/nemotron-3-super-120b-a12b:free"
+            Write-Host "  claude-or gpt-oss-20b       # openai/gpt-oss-20b:free"
+            Write-Host "  claude-or gpt-oss-120b      # openai/gpt-oss-120b:free"
+            Write-Host "  claude-or hermes-405b       # nousresearch/hermes-3-llama-3.1-405b:free"
+            Write-Host ""
+            Write-Host "NVIDIA NIM:"
+            Write-Host "  claude-or kimi-k2.6"
+            Write-Host "  claude-or mistral-medium"
+            Write-Host "  claude-or nvidia-nano"
+            Write-Host "  claude-or nvidia-omni"
+            Write-Host "  claude-or nemotron-120b"
+            Write-Host "  claude-or qwen-coder-nvidia"
+            Write-Host "  claude-or qwen-next-nvidia"
+            Write-Host "  claude-or qwen3.5-122b"
+            return
+        }
+        {$_ -in @("qwen-coder","qwen-coder-480b","nvidia-coder","fast")} { $target = "qwen/qwen3-coder:free" }
+        {$_ -in @("qwen-next","qwen3-next","qwen3-122b","balanced")} { $target = "qwen/qwen3-next-80b-a3b-instruct:free" }
+        {$_ -in @("ring","ring-2.6","ring-1t","default")} { $target = "inclusionai/ring-2.6-1t:free" }
+        {$_ -in @("nemotron-free","nemotron-120b-free","nvidia-super-free")} { $target = "nvidia/nemotron-3-super-120b-a12b:free" }
+        "gpt-oss-20b" { $target = "openai/gpt-oss-20b:free" }
+        {$_ -in @("gpt-oss-120b","large")} { $target = "openai/gpt-oss-120b:free" }
+        {$_ -in @("hermes-405b","openrouter-free")} { $target = "nousresearch/hermes-3-llama-3.1-405b:free" }
+        {$_ -in @("kimi","kimi-k2.6","moonshot","moonshot-kimi")} { $provider = "nvidia"; $target = "kimi-k2.6" }
+        {$_ -in @("mistral","mistral-medium","mistral-medium-3.5","mistral-medium-3-5","mistral-medium-3.5-128b")} { $provider = "nvidia"; $target = "mistral-medium" }
+        {$_ -in @("nvidia-nano","nemotron-nano")} { $provider = "nvidia"; $target = "nvidia-nano" }
+        {$_ -in @("nvidia-omni","nemotron-omni")} { $provider = "nvidia"; $target = "nvidia-omni" }
+        {$_ -in @("nemotron-120b","nvidia-super")} { $provider = "nvidia"; $target = "nemotron-120b" }
+        "qwen-coder-nvidia" { $provider = "nvidia"; $target = "qwen-coder-nvidia" }
+        "qwen-next-nvidia" { $provider = "nvidia"; $target = "qwen-next-nvidia" }
+        {$_ -in @("qwen3.5-122b","qwen3-122b-nvidia")} { $provider = "nvidia"; $target = "qwen3.5-122b-nvidia" }
+        default {
+            if ($Model.EndsWith(":free")) { $target = $Model } else { $provider = "nvidia"; $target = $Model }
+        }
+    }
+
+    if ($provider -eq "openrouter") {
+        Write-Host "OpenRouter free: $target" -ForegroundColor Cyan
+        $env:ANTHROPIC_BASE_URL = "https://openrouter.ai/api"
+        $env:ANTHROPIC_AUTH_TOKEN = $env:OPENROUTER_API_KEY
+        $env:ANTHROPIC_API_KEY = ""
+        $env:ANTHROPIC_DEFAULT_OPUS_MODEL = $target
+        $env:ANTHROPIC_DEFAULT_SONNET_MODEL = $target
+        $env:ANTHROPIC_DEFAULT_HAIKU_MODEL = "inclusionai/ring-2.6-1t:free"
+        $env:CLAUDE_CODE_SUBAGENT_MODEL = "inclusionai/ring-2.6-1t:free"
+        $env:DISABLE_INTERLEAVED_THINKING = "1"
+        $env:CLAUDE_CODE_DISABLE_AUTO_MEMORY = "1"
+        claude --model $target --effort low --mcp-config "$env:USERPROFILE\.claude\openrouter-empty-mcp.json" --strict-mcp-config
+    } else {
+        if (-not $env:NVIDIA_API_KEY) {
+            Write-Host "Error: NVIDIA_API_KEY is missing. Put it in $env:USERPROFILE\.claude\.env" -ForegroundColor Red
+            return
+        }
+        try {
+            Invoke-WebRequest -Uri "http://127.0.0.1:4000/health" -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop | Out-Null
+        } catch {
+            Write-Host "Starting LiteLLM only for NVIDIA..." -ForegroundColor Yellow
+            Start-Process -FilePath "litellm" -ArgumentList "--config", "$env:USERPROFILE\.claude\litellm_config.yaml", "--port", "4000" -WindowStyle Hidden
+            Start-Sleep -Seconds 4
+        }
+        Write-Host "NVIDIA NIM: $target" -ForegroundColor Cyan
+        $env:ANTHROPIC_BASE_URL = "http://127.0.0.1:4000"
+        $env:ANTHROPIC_AUTH_TOKEN = "sk-litellm-proxy"
+        $env:ANTHROPIC_API_KEY = ""
+        $env:ANTHROPIC_DEFAULT_OPUS_MODEL = $target
+        $env:ANTHROPIC_DEFAULT_SONNET_MODEL = $target
+        $env:ANTHROPIC_DEFAULT_HAIKU_MODEL = "qwen-coder-nvidia"
+        $env:CLAUDE_CODE_SUBAGENT_MODEL = "qwen-coder-nvidia"
+        $env:DISABLE_INTERLEAVED_THINKING = "1"
+        $env:CLAUDE_CODE_DISABLE_AUTO_MEMORY = "1"
+        claude --model $target --effort low --mcp-config "$env:USERPROFILE\.claude\openrouter-empty-mcp.json" --strict-mcp-config
+    }
+}
+# <<< claude-code-free-router <<<
+'@
+
+    Add-Content -Path $ProfilePath -Value $block
+}
+
+Write-Host "[1/4] Installing LiteLLM if needed" -ForegroundColor Yellow
+Install-LiteLLM
+
+Write-Host "[2/4] Installing config files" -ForegroundColor Yellow
+New-Item -ItemType Directory -Path $CommandsDir -Force | Out-Null
+Copy-Item -Path (Join-Path $RootDir "litellm_config.yaml") -Destination (Join-Path $ClaudeDir "litellm_config.yaml") -Force
+Copy-Item -Path (Join-Path $RootDir "openrouter-empty-mcp.json") -Destination (Join-Path $ClaudeDir "openrouter-empty-mcp.json") -Force
+Copy-Item -Path (Join-Path $RootDir "commands\models.md") -Destination (Join-Path $CommandsDir "models.md") -Force
+if (!(Test-Path (Join-Path $ClaudeDir ".env"))) {
+    Copy-Item -Path (Join-Path $RootDir ".env.template") -Destination (Join-Path $ClaudeDir ".env") -Force
+    Write-Host "Created $ClaudeDir\.env. Add your API keys there." -ForegroundColor Yellow
+}
+
+Write-Host "[3/4] Installing claude-or PowerShell function" -ForegroundColor Yellow
+Install-ProfileBlock
+
+Write-Host "[4/4] Done" -ForegroundColor Green
 Write-Host ""
-Write-Host "Prossimi passi:" -ForegroundColor Yellow
-Write-Host "1. Riavvia PowerShell o esegui: . $powerShellProfile" -ForegroundColor White
-Write-Host "2. Ottieni le API key:" -ForegroundColor White
-Write-Host "   - OpenRouter: https://openrouter.ai/keys" -ForegroundColor Cyan
-Write-Host "   - NVIDIA: https://build.nvidia.com/" -ForegroundColor Cyan
-Write-Host "3. Aggiungi le API key come variabili d'ambiente o al profilo PowerShell" -ForegroundColor White
-Write-Host "4. Avvia con: claude-or" -ForegroundColor Green
-Write-Host ""
-Write-Host "Per cambiare modello durante una sessione, usa: /model <nome>" -ForegroundColor White
-Write-Host ""
-Write-Host "Log del proxy: C:\tmp\litellm-proxy.log" -ForegroundColor White
-Write-Host "Verifica proxy: curl http://127.0.0.1:4000/health" -ForegroundColor White
-Write-Host ""
+Write-Host "Next:"
+Write-Host "  1. Edit $ClaudeDir\.env and add OPENROUTER_API_KEY and NVIDIA_API_KEY"
+Write-Host "  2. Reload PowerShell: . `$PROFILE"
+Write-Host "  3. List commands: claude-or models"
+Write-Host "  4. Start default Ring session: claude-or"
