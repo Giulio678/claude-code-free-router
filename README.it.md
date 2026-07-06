@@ -1,24 +1,24 @@
 # Claude Code Free Router
 
-[Italian README](README.md)
+[English README](README.md)
 
-Local wrapper for starting Claude Code with free OpenRouter models and, optionally, NVIDIA NIM models through LiteLLM.
+Wrapper locale per avviare Claude Code usando modelli gratuiti OpenRouter e, opzionalmente, modelli NVIDIA NIM via LiteLLM.
 
-Current status: Ring is no longer the default. `inclusionai/ring-2.6-1t:free` was removed because it is not available in the OpenRouter catalog used during testing. The default is Laguna XS 2.1.
+Stato attuale: il default non e' piu' Ring. `inclusionai/ring-2.6-1t:free` e' stato rimosso perche' non risulta disponibile nel catalogo OpenRouter usato nei test. Il default e' Laguna XS 2.1.
 
-## What It Installs
+## Cosa installa
 
-The setup copies and configures:
+Il setup copia e configura:
 
 ```text
 ~/.claude/.env
 ~/.claude/litellm_config.yaml
 ~/.claude/openrouter-empty-mcp.json
 ~/.claude/commands/models.md
-~/.zshrc or ~/.bashrc, with the claude-or function
+~/.zshrc o ~/.bashrc, con la funzione claude-or
 ```
 
-The `claude-or` function starts Claude Code with:
+La funzione `claude-or` avvia Claude Code con:
 
 ```text
 --effort low
@@ -26,25 +26,25 @@ The `claude-or` function starts Claude Code with:
 --strict-mcp-config
 ```
 
-This reduces unrelated MCP noise and makes startup behavior more predictable.
+Questo riduce rumore da MCP non necessari e rende il comportamento piu' prevedibile.
 
-## Providers
+## Provider
 
-OpenRouter free models go directly to OpenRouter:
+OpenRouter free va diretto a OpenRouter:
 
 ```text
 Claude Code -> OpenRouter Anthropic-compatible API
 ```
 
-NVIDIA NIM goes through local LiteLLM:
+NVIDIA NIM passa da LiteLLM locale:
 
 ```text
 Claude Code -> LiteLLM localhost:4000 -> NVIDIA NIM
 ```
 
-LiteLLM stays in the project only for NVIDIA NIM and local mapping compatibility. OpenRouter `:free` models do not need the LiteLLM proxy in the `claude-or` function.
+LiteLLM resta nel progetto solo per NVIDIA NIM e per compatibilita' con mapping locali. I modelli OpenRouter `:free` non hanno bisogno del proxy LiteLLM nella funzione `claude-or`.
 
-## macOS / Linux Install
+## Installazione macOS / Linux
 
 ```bash
 git clone https://github.com/Giulio678/claude-code-free-router.git
@@ -53,13 +53,13 @@ bash setup-linux-mac.sh
 source ~/.zshrc
 ```
 
-If you use bash:
+Se usi bash:
 
 ```bash
 source ~/.bashrc
 ```
 
-## Windows PowerShell Install
+## Installazione Windows PowerShell
 
 ```powershell
 git clone https://github.com/Giulio678/claude-code-free-router.git
@@ -68,67 +68,67 @@ powershell -ExecutionPolicy Bypass -File setup-windows.ps1
 . $PROFILE
 ```
 
-## API Keys
+## API keys
 
-The setup creates `~/.claude/.env` if it does not already exist. Add:
+Il setup crea `~/.claude/.env` se non esiste. Inserisci:
 
 ```bash
 OPENROUTER_API_KEY="sk-or-v1-..."
 NVIDIA_API_KEY="nvapi-..."
 ```
 
-Useful links:
+Link utili:
 
 ```text
 OpenRouter: https://openrouter.ai/keys
 NVIDIA NIM: https://build.nvidia.com/
 ```
 
-## Quick Start
+## Avvio rapido
 
-List models:
+Lista modelli:
 
 ```bash
 claude-or models
 ```
 
-Start the default session:
+Avvio default:
 
 ```bash
 claude-or
 ```
 
-Current default:
+Default attuale:
 
 ```text
 poolside/laguna-xs-2.1:free
 ```
 
-Non-interactive test:
+Test non interattivo:
 
 ```bash
-claude-or -p "Reply only OK" --output-format json
+claude-or -p "Rispondi solo OK" --output-format json
 ```
 
-In real test output, `modelUsage` should show:
+Nei test reali `modelUsage` deve mostrare:
 
 ```text
 poolside/laguna-xs-2.1:free
 ```
 
-## Configured OpenRouter Models
+## Modelli OpenRouter configurati
 
-Recommended commands:
+Comandi consigliati:
 
 ```bash
 claude-or laguna-xs       # poolside/laguna-xs-2.1:free, default coding
 claude-or north-code      # cohere/north-mini-code:free, fast coding
-claude-or laguna-m        # poolside/laguna-m.1:free, large coding
-claude-or nemotron-free   # nvidia/nemotron-3-super-120b-a12b:free, long-context reasoning
-claude-or router          # openrouter/free, OpenRouter free router
+claude-or laguna-m        # poolside/laguna-m.1:free, coding large
+claude-or nemotron-free   # nvidia/nemotron-3-super-120b-a12b:free, long reasoning
+claude-or router          # openrouter/free, router OpenRouter gratuito
 ```
 
-Legacy options still available:
+Legacy ancora disponibili:
 
 ```bash
 claude-or qwen-coder      # qwen/qwen3-coder:free
@@ -138,7 +138,7 @@ claude-or gpt-oss-120b    # openai/gpt-oss-120b:free
 claude-or hermes-405b     # nousresearch/hermes-3-llama-3.1-405b:free
 ```
 
-You can also pass a full OpenRouter slug:
+Puoi anche passare uno slug OpenRouter completo:
 
 ```bash
 claude-or poolside/laguna-xs-2.1:free
@@ -148,11 +148,11 @@ claude-or nvidia/nemotron-3-super-120b-a12b:free
 claude-or openrouter/free
 ```
 
-Do not use `inclusionai/ring-2.6-1t:free`.
+Nota: `inclusionai/ring-2.6-1t:free` non va usato.
 
-## Switching Models Inside Claude Code
+## Cambiare modello dentro Claude Code
 
-When starting with OpenRouter, the function also configures the aliases used by `/model`:
+All'avvio OpenRouter la funzione imposta anche gli alias usati da `/model`:
 
 ```text
 /model sonnet  -> poolside/laguna-xs-2.1:free
@@ -160,23 +160,23 @@ When starting with OpenRouter, the function also configures the aliases used by 
 /model haiku   -> cohere/north-mini-code:free
 ```
 
-It also sets:
+In piu' imposta:
 
 ```text
 ANTHROPIC_CUSTOM_MODEL_OPTION=nvidia/nemotron-3-super-120b-a12b:free
 CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1
 ```
 
-So the `/model` picker can show Nemotron as a custom option and can query the OpenRouter gateway for other models. If the picker does not show a model, you can still type the full slug:
+Quindi il picker `/model` puo' mostrare Nemotron come voce custom e puo' interrogare il gateway OpenRouter per altri modelli. Se il picker non mostra un modello, puoi sempre scrivere lo slug completo:
 
 ```text
 /model nvidia/nemotron-3-super-120b-a12b:free
 /model openrouter/free
 ```
 
-## NVIDIA NIM Models
+## Modelli NVIDIA NIM
 
-These go through the local LiteLLM proxy:
+Questi passano dal proxy LiteLLM locale:
 
 ```bash
 claude-or kimi-k2.6         # moonshotai/kimi-k2.6
@@ -189,54 +189,54 @@ claude-or qwen-next-nvidia  # qwen/qwen3-next-80b-a3b-instruct
 claude-or qwen3.5-122b      # qwen/qwen3.5-122b-a10b
 ```
 
-When you choose an NVIDIA model, the function:
+Quando scegli un modello NVIDIA, la funzione:
 
-1. checks `NVIDIA_API_KEY`;
-2. checks `http://127.0.0.1:4000/health`;
-3. starts LiteLLM with `~/.claude/litellm_config.yaml` if it is not responding;
-4. starts Claude Code using `ANTHROPIC_BASE_URL=http://127.0.0.1:4000`.
+1. controlla `NVIDIA_API_KEY`;
+2. controlla `http://127.0.0.1:4000/health`;
+3. se LiteLLM non risponde, lo avvia con `~/.claude/litellm_config.yaml`;
+4. avvia Claude Code usando `ANTHROPIC_BASE_URL=http://127.0.0.1:4000`.
 
-LiteLLM log:
+Log LiteLLM:
 
 ```text
 /tmp/litellm-nvidia.log
 ```
 
-## Important Files
+## File importanti
 
 ```text
 openrouter-empty-mcp.json
 ```
 
-Contains:
+Contiene:
 
 ```json
 {"mcpServers": {}}
 ```
 
-This starts Claude Code without global MCP servers when using `--strict-mcp-config`.
+Serve a partire senza MCP globali quando si usa `--strict-mcp-config`.
 
 ```text
 litellm_config.yaml
 ```
 
-Contains mappings for OpenRouter and NVIDIA NIM. Direct OpenRouter usage does not depend on LiteLLM, but the file remains useful for the NVIDIA proxy and debugging.
+Contiene mapping per OpenRouter e NVIDIA NIM. OpenRouter diretto non dipende da LiteLLM, ma il file resta utile per il proxy NVIDIA e per debug.
 
 ```text
 commands/models.md
 ```
 
-Installs the `/models` slash command inside Claude Code.
+Installa il comando slash `/models` dentro Claude Code.
 
-## How `claude-or` Works
+## Come funziona `claude-or`
 
-For OpenRouter, it sets:
+Per OpenRouter imposta:
 
 ```text
 ANTHROPIC_BASE_URL=https://openrouter.ai/api
 ANTHROPIC_AUTH_TOKEN=$OPENROUTER_API_KEY
 ANTHROPIC_API_KEY=
-ANTHROPIC_MODEL=<selected model>
+ANTHROPIC_MODEL=<modello scelto>
 ANTHROPIC_DEFAULT_SONNET_MODEL=poolside/laguna-xs-2.1:free
 ANTHROPIC_DEFAULT_OPUS_MODEL=poolside/laguna-m.1:free
 ANTHROPIC_DEFAULT_HAIKU_MODEL=cohere/north-mini-code:free
@@ -247,45 +247,45 @@ DISABLE_INTERLEAVED_THINKING=1
 CLAUDE_CODE_DISABLE_AUTO_MEMORY=1
 ```
 
-Then it runs:
+Poi esegue:
 
 ```bash
 claude --model "$model" --effort low --mcp-config "$HOME/.claude/openrouter-empty-mcp.json" --strict-mcp-config "$@"
 ```
 
-Both `ANTHROPIC_MODEL` and `--model` are set to prevent Claude Code from reusing an old persisted model.
+`ANTHROPIC_MODEL` e `--model` sono entrambi impostati per evitare che Claude Code riprenda un vecchio modello persistito.
 
 ## Troubleshooting
 
-### I Still See Ring On Startup
+### Vedo ancora Ring nella schermata iniziale
 
-Ring was an old saved model choice. Close the open Claude session and restart:
+Ring era una vecchia scelta salvata. Chiudi la sessione Claude aperta e rilancia:
 
 ```bash
 source ~/.zshrc
 claude-or
 ```
 
-Run a real check:
+Verifica reale:
 
 ```bash
-claude-or -p "Reply only OK" --output-format json
+claude-or -p "Rispondi solo OK" --output-format json
 ```
 
-In the JSON, check `modelUsage`: it should be `poolside/laguna-xs-2.1:free`.
+Nel JSON controlla `modelUsage`: deve essere `poolside/laguna-xs-2.1:free`.
 
-### The Shell Still Has The Old Function
+### La shell ha ancora la funzione vecchia
 
-Already loaded shell functions do not change until you reload your profile:
+Le funzioni shell gia' caricate non cambiano finche' non ricarichi il profilo:
 
 ```bash
 source ~/.zshrc
 functions claude-or | grep laguna
 ```
 
-### OpenRouter Free Is Slow Or Rate-Limited
+### OpenRouter free fallisce o e' lento
 
-Free models can be rate-limited or removed. Try:
+I modelli free possono essere rate-limited o rimossi. Prova:
 
 ```bash
 claude-or north-code
@@ -294,33 +294,33 @@ claude-or nemotron-free
 claude-or router
 ```
 
-### NVIDIA Does Not Start
+### NVIDIA non parte
 
-Check:
+Controlla:
 
 ```bash
 curl http://127.0.0.1:4000/health
 curl http://127.0.0.1:4000/v1/models
 ```
 
-Restart the proxy:
+Riavvia il proxy:
 
 ```bash
 pkill -f "litellm --config"
 claude-or kimi-k2.6
 ```
 
-### Missing API Key
+### API key mancante
 
-Edit:
+Modifica:
 
 ```text
 ~/.claude/.env
 ```
 
-### Updating The Installed Config From This Repo
+### Aggiornare la config installata dalla repo
 
-From the repo:
+Dalla repo:
 
 ```bash
 bash setup-linux-mac.sh
