@@ -1,4 +1,40 @@
 model_list:
+  # Recommended OpenRouter free models for Claude Code.
+  - model_name: laguna-xs
+    litellm_params:
+      model: openrouter/poolside/laguna-xs-2.1:free
+      api_key: os.environ/OPENROUTER_API_KEY
+
+  - model_name: poolside/laguna-xs-2.1:free
+    litellm_params:
+      model: openrouter/poolside/laguna-xs-2.1:free
+      api_key: os.environ/OPENROUTER_API_KEY
+
+  - model_name: north-code
+    litellm_params:
+      model: openrouter/cohere/north-mini-code:free
+      api_key: os.environ/OPENROUTER_API_KEY
+
+  - model_name: cohere/north-mini-code:free
+    litellm_params:
+      model: openrouter/cohere/north-mini-code:free
+      api_key: os.environ/OPENROUTER_API_KEY
+
+  - model_name: laguna-m
+    litellm_params:
+      model: openrouter/poolside/laguna-m.1:free
+      api_key: os.environ/OPENROUTER_API_KEY
+
+  - model_name: poolside/laguna-m.1:free
+    litellm_params:
+      model: openrouter/poolside/laguna-m.1:free
+      api_key: os.environ/OPENROUTER_API_KEY
+
+  - model_name: openrouter/free
+    litellm_params:
+      model: openrouter/openrouter/free
+      api_key: os.environ/OPENROUTER_API_KEY
+
   # OpenRouter: only models with :free suffix.
   - model_name: qwen-coder
     litellm_params:
@@ -18,26 +54,6 @@ model_list:
   - model_name: qwen/qwen3-next-80b-a3b-instruct:free
     litellm_params:
       model: openrouter/qwen/qwen3-next-80b-a3b-instruct:free
-      api_key: os.environ/OPENROUTER_API_KEY
-
-  - model_name: ring
-    litellm_params:
-      model: openrouter/inclusionai/ring-2.6-1t:free
-      api_key: os.environ/OPENROUTER_API_KEY
-
-  - model_name: inclusionai/ring-2.6-1t:free
-    litellm_params:
-      model: openrouter/inclusionai/ring-2.6-1t:free
-      api_key: os.environ/OPENROUTER_API_KEY
-
-  - model_name: nemotron-free
-    litellm_params:
-      model: openrouter/nvidia/nemotron-3-super-120b-a12b:free
-      api_key: os.environ/OPENROUTER_API_KEY
-
-  - model_name: nvidia/nemotron-3-super-120b-a12b:free
-    litellm_params:
-      model: openrouter/nvidia/nemotron-3-super-120b-a12b:free
       api_key: os.environ/OPENROUTER_API_KEY
 
   - model_name: gpt-oss-20b
@@ -70,7 +86,17 @@ model_list:
       model: openrouter/nousresearch/hermes-3-llama-3.1-405b:free
       api_key: os.environ/OPENROUTER_API_KEY
 
-  # NVIDIA NIM: non-:free models go direct to NVIDIA through this proxy.
+  - model_name: nemotron-120b-free
+    litellm_params:
+      model: openrouter/nvidia/nemotron-3-super-120b-a12b:free
+      api_key: os.environ/OPENROUTER_API_KEY
+
+  - model_name: nvidia/nemotron-3-super-120b-a12b:free
+    litellm_params:
+      model: openrouter/nvidia/nemotron-3-super-120b-a12b:free
+      api_key: os.environ/OPENROUTER_API_KEY
+
+  # NVIDIA NIM: non-:free models go direct to NVIDIA.
   - model_name: kimi-k2.6
     litellm_params:
       model: nvidia_nim/moonshotai/kimi-k2.6

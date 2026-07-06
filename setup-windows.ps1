@@ -49,7 +49,7 @@ if (Test-Path "$env:USERPROFILE\.claude\.env") {
 }
 
 function claude-or {
-    param([string]$Model = "ring")
+    param([string]$Model = "laguna-xs")
 
     if (-not $env:OPENROUTER_API_KEY) {
         Write-Host "Error: OPENROUTER_API_KEY is missing. Put it in $env:USERPROFILE\.claude\.env" -ForegroundColor Red
@@ -60,10 +60,15 @@ function claude-or {
     switch ($Model) {
         {$_ -in @("models","model","list","--models","-m")} {
             Write-Host "OpenRouter free:"
+            Write-Host "  claude-or laguna-xs         # poolside/laguna-xs-2.1:free (default)"
+            Write-Host "  claude-or north-code        # cohere/north-mini-code:free"
+            Write-Host "  claude-or laguna-m          # poolside/laguna-m.1:free"
+            Write-Host "  claude-or nemotron-free     # nvidia/nemotron-3-super-120b-a12b:free"
+            Write-Host "  claude-or router            # openrouter/free"
+            Write-Host ""
+            Write-Host "Legacy OpenRouter free:"
             Write-Host "  claude-or qwen-coder        # qwen/qwen3-coder:free"
             Write-Host "  claude-or qwen-next         # qwen/qwen3-next-80b-a3b-instruct:free"
-            Write-Host "  claude-or ring              # inclusionai/ring-2.6-1t:free (default)"
-            Write-Host "  claude-or nemotron-free     # nvidia/nemotron-3-super-120b-a12b:free"
             Write-Host "  claude-or gpt-oss-20b       # openai/gpt-oss-20b:free"
             Write-Host "  claude-or gpt-oss-120b      # openai/gpt-oss-120b:free"
             Write-Host "  claude-or hermes-405b       # nousresearch/hermes-3-llama-3.1-405b:free"
@@ -79,13 +84,16 @@ function claude-or {
             Write-Host "  claude-or qwen3.5-122b"
             return
         }
-        {$_ -in @("qwen-coder","qwen-coder-480b","nvidia-coder","fast")} { $target = "qwen/qwen3-coder:free" }
+        {$_ -in @("laguna-xs","laguna-xs-2.1","poolside-xs","poolside-laguna-xs","coding","default")} { $target = "poolside/laguna-xs-2.1:free" }
+        {$_ -in @("north-code","north-mini-code","cohere-code","fast")} { $target = "cohere/north-mini-code:free" }
+        {$_ -in @("laguna-m","laguna-m.1","poolside-m","poolside-laguna-m","large","hard")} { $target = "poolside/laguna-m.1:free" }
+        {$_ -in @("router","openrouter-router","openrouter-free","free")} { $target = "openrouter/free" }
+        {$_ -in @("qwen-coder","qwen-coder-480b","nvidia-coder")} { $target = "qwen/qwen3-coder:free" }
         {$_ -in @("qwen-next","qwen3-next","qwen3-122b","balanced")} { $target = "qwen/qwen3-next-80b-a3b-instruct:free" }
-        {$_ -in @("ring","ring-2.6","ring-1t","default")} { $target = "inclusionai/ring-2.6-1t:free" }
         {$_ -in @("nemotron-free","nemotron-120b-free","nvidia-super-free")} { $target = "nvidia/nemotron-3-super-120b-a12b:free" }
         "gpt-oss-20b" { $target = "openai/gpt-oss-20b:free" }
-        {$_ -in @("gpt-oss-120b","large")} { $target = "openai/gpt-oss-120b:free" }
-        {$_ -in @("hermes-405b","openrouter-free")} { $target = "nousresearch/hermes-3-llama-3.1-405b:free" }
+        {$_ -in @("gpt-oss-120b")} { $target = "openai/gpt-oss-120b:free" }
+        {$_ -in @("hermes-405b")} { $target = "nousresearch/hermes-3-llama-3.1-405b:free" }
         {$_ -in @("kimi","kimi-k2.6","moonshot","moonshot-kimi")} { $provider = "nvidia"; $target = "kimi-k2.6" }
         {$_ -in @("mistral","mistral-medium","mistral-medium-3.5","mistral-medium-3-5","mistral-medium-3.5-128b")} { $provider = "nvidia"; $target = "mistral-medium" }
         {$_ -in @("nvidia-nano","nemotron-nano")} { $provider = "nvidia"; $target = "nvidia-nano" }
@@ -95,19 +103,26 @@ function claude-or {
         "qwen-next-nvidia" { $provider = "nvidia"; $target = "qwen-next-nvidia" }
         {$_ -in @("qwen3.5-122b","qwen3-122b-nvidia")} { $provider = "nvidia"; $target = "qwen3.5-122b-nvidia" }
         default {
-            if ($Model.EndsWith(":free")) { $target = $Model } else { $provider = "nvidia"; $target = $Model }
+            if ($Model.EndsWith(":free") -or $Model.StartsWith("openrouter/")) { $target = $Model } else { $provider = "nvidia"; $target = $Model }
         }
     }
 
     if ($provider -eq "openrouter") {
-        Write-Host "OpenRouter free: $target" -ForegroundColor Cyan
+        Write-Host "OpenRouter: $target" -ForegroundColor Cyan
         $env:ANTHROPIC_BASE_URL = "https://openrouter.ai/api"
         $env:ANTHROPIC_AUTH_TOKEN = $env:OPENROUTER_API_KEY
         $env:ANTHROPIC_API_KEY = ""
-        $env:ANTHROPIC_DEFAULT_OPUS_MODEL = $target
-        $env:ANTHROPIC_DEFAULT_SONNET_MODEL = $target
-        $env:ANTHROPIC_DEFAULT_HAIKU_MODEL = "inclusionai/ring-2.6-1t:free"
-        $env:CLAUDE_CODE_SUBAGENT_MODEL = "inclusionai/ring-2.6-1t:free"
+        $env:ANTHROPIC_MODEL = $target
+        $env:ANTHROPIC_DEFAULT_OPUS_MODEL = "poolside/laguna-m.1:free"
+        $env:ANTHROPIC_DEFAULT_OPUS_MODEL_NAME = "Laguna M.1"
+        $env:ANTHROPIC_DEFAULT_SONNET_MODEL = "poolside/laguna-xs-2.1:free"
+        $env:ANTHROPIC_DEFAULT_SONNET_MODEL_NAME = "Laguna XS 2.1"
+        $env:ANTHROPIC_DEFAULT_HAIKU_MODEL = "cohere/north-mini-code:free"
+        $env:ANTHROPIC_DEFAULT_HAIKU_MODEL_NAME = "North Mini Code"
+        $env:ANTHROPIC_CUSTOM_MODEL_OPTION = "nvidia/nemotron-3-super-120b-a12b:free"
+        $env:ANTHROPIC_CUSTOM_MODEL_OPTION_NAME = "Nemotron 3 Super"
+        $env:CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY = "1"
+        $env:CLAUDE_CODE_SUBAGENT_MODEL = "cohere/north-mini-code:free"
         $env:DISABLE_INTERLEAVED_THINKING = "1"
         $env:CLAUDE_CODE_DISABLE_AUTO_MEMORY = "1"
         claude --model $target --effort low --mcp-config "$env:USERPROFILE\.claude\openrouter-empty-mcp.json" --strict-mcp-config
@@ -127,6 +142,7 @@ function claude-or {
         $env:ANTHROPIC_BASE_URL = "http://127.0.0.1:4000"
         $env:ANTHROPIC_AUTH_TOKEN = "sk-litellm-proxy"
         $env:ANTHROPIC_API_KEY = ""
+        $env:ANTHROPIC_MODEL = $target
         $env:ANTHROPIC_DEFAULT_OPUS_MODEL = $target
         $env:ANTHROPIC_DEFAULT_SONNET_MODEL = $target
         $env:ANTHROPIC_DEFAULT_HAIKU_MODEL = "qwen-coder-nvidia"
@@ -164,4 +180,4 @@ Write-Host "Next:"
 Write-Host "  1. Edit $ClaudeDir\.env and add OPENROUTER_API_KEY and NVIDIA_API_KEY"
 Write-Host "  2. Reload PowerShell: . `$PROFILE"
 Write-Host "  3. List commands: claude-or models"
-Write-Host "  4. Start default Ring session: claude-or"
+Write-Host "  4. Start default Laguna session: claude-or"
